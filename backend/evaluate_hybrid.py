@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from sklearn.metrics import classification_report, accuracy_score
+from sklearn.model_selection import train_test_split
 from cf_engine import CFEngine
 from rf_model import RFModel
 
@@ -39,14 +40,17 @@ def evaluate_hybrid_system():
         print("RF model not found! Please run train_model.py first.")
         return
 
+    # Split data exactly like in train_model.py to avoid data leakage
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=42, stratify=df['Target_Class'])
+
     y_true = []
     y_pred_cf = []
     y_pred_rf = []
     y_pred_hybrid = []
 
-    print("Evaluating entire dataset (374 rows) against CF, RF, and Hybrid Engine...\n")
+    print(f"Evaluating only on the Test Set ({len(df_test)} rows) against CF, RF, and Hybrid Engine...\n")
 
-    for index, row in df.iterrows():
+    for index, row in df_test.iterrows():
         # Target
         true_class = row['Target_Class']
         y_true.append(true_class)
