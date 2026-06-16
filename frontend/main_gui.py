@@ -261,6 +261,8 @@ class App(ctk.CTk):
         
         output += f"--- Certainty Factor (CF) Engine ---\n"
         output += f"CF Class: {cf_res.get('class', 'N/A')} (Score: {cf_res.get('cf_value', 0):.3f})\n"
+        cf_all = cf_res.get('all_scores', {})
+        output += f"Skor Kelas CF: BAIK: {cf_all.get('BAIK',0):.3f}, CUKUP: {cf_all.get('CUKUP',0):.3f}, BURUK: {cf_all.get('BURUK',0):.3f}\n"
         output += "Fired Rules:\n"
         for r in cf_res.get('fired_rules', []):
             output += f" - [{r['id']}] {r['desc']} (CF added: {r['cf_added']})\n"
