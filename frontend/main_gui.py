@@ -14,6 +14,7 @@ if sys.platform.startswith('win'):
                 elif d.startswith('tk'):
                     os.environ['TK_LIBRARY'] = path
 
+# pyrefly: ignore [missing-import]
 import customtkinter as ctk
 import requests
 import tkinter.messagebox as messagebox
@@ -28,12 +29,13 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("Sisru: Sistem Pakar Evaluasi Kualitas Tidur")
-        self.geometry("1000x800")
+        self.title("Sisru: Sistem Pakar Evaluasi Kualitas Tidur (Hybrid Dashboard)")
+        self.geometry("1280x820")
+        self.resizable(True, True)
         
         # Grid config:
         # Col 0: Sidebar (Weight 0, minsize=300)
-        # Col 1: Main Content (Weight 1)
+        # Col 1: Main Content Dashboard (Weight 1)
         self.grid_columnconfigure(0, weight=0, minsize=300)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -104,77 +106,240 @@ class App(ctk.CTk):
         self.history_data = []
 
         # ====================
-        # MAIN CONTENT
+        # MAIN DASHBOARD
         # ====================
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.main_frame.grid(row=0, column=1, sticky="nsew")
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_rowconfigure(2, weight=1)
+        
+        # Split main frame into 2 equal columns:
+        # Col 0: Input form
+        # Col 1: Diagnosis & recommendation results
+        self.main_frame.grid_columnconfigure(0, weight=1, minsize=450)
+        self.main_frame.grid_columnconfigure(1, weight=1, minsize=500)
+        self.main_frame.grid_rowconfigure(0, weight=1)
+
+        # --------------------
+        # LEFT COLUMN (Form)
+        # --------------------
+        self.left_column = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        self.left_column.grid(row=0, column=0, sticky="nsew", padx=(10, 10), pady=10)
+        self.left_column.grid_columnconfigure(0, weight=1)
+        self.left_column.grid_rowconfigure(2, weight=1)
 
         # Title
-        self.title_label = ctk.CTkLabel(self.main_frame, text="Evaluator Kualitas Tidur", font=ctk.CTkFont(size=24, weight="bold"))
-        self.title_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.title_label = ctk.CTkLabel(self.left_column, text="Evaluator Kualitas Tidur", font=ctk.CTkFont(size=22, weight="bold"))
+        self.title_label.grid(row=0, column=0, padx=10, pady=(15, 2))
         
-        self.desc_label = ctk.CTkLabel(self.main_frame, text="Sistem Hybrid: Certainty Factor + Random Forest", font=ctk.CTkFont(size=14))
-        self.desc_label.grid(row=1, column=0, padx=20, pady=(0, 20))
+        self.desc_label = ctk.CTkLabel(self.left_column, text="Sistem Hybrid: Certainty Factor + Random Forest", font=ctk.CTkFont(size=13), text_color="gray")
+        self.desc_label.grid(row=1, column=0, padx=10, pady=(0, 10))
 
-        # Input Form
-        self.input_frame = ctk.CTkScrollableFrame(self.main_frame)
-        self.input_frame.grid(row=2, column=0, padx=20, pady=10, sticky="nsew")
+        # Input Form (Scrollable)
+        self.input_frame = ctk.CTkScrollableFrame(self.left_column)
+        self.input_frame.grid(row=2, column=0, padx=10, pady=5, sticky="nsew")
         self.input_frame.grid_columnconfigure(1, weight=1)
 
-        # Form fields
-        self.name_entry = self.create_entry(0, "Nama:")
+        # Form fields directly inside self.input_frame
+        self.name_entry = self.create_entry(self.input_frame, 0, "Nama:")
         self.gender_var = ctk.StringVar(value="Laki-laki")
-        self.create_dropdown(1, "Jenis Kelamin:", list(self.gender_map.keys()), self.gender_var)
-        self.age_entry = self.create_entry(2, "Usia:")
+        self.create_dropdown(self.input_frame, 1, "Jenis Kelamin:", list(self.gender_map.keys()), self.gender_var)
+        self.age_entry = self.create_entry(self.input_frame, 2, "Usia:")
         self.occupation_var = ctk.StringVar(value="Pelajar/Mahasiswa")
-        self.create_dropdown(3, "Pekerjaan:", list(self.occupation_map.keys()), self.occupation_var)
-        self.sleep_duration_entry = self.create_entry(4, "Durasi Tidur (jam):")
-        self.stress_level_slider = self.create_slider(5, "Tingkat Stres (1-10):", 1, 10)
-        self.physical_activity_entry = self.create_entry(6, "Aktivitas Fisik (menit/hari):")
+        self.create_dropdown(self.input_frame, 3, "Pekerjaan:", list(self.occupation_map.keys()), self.occupation_var)
+        self.sleep_duration_entry = self.create_entry(self.input_frame, 4, "Durasi Tidur (jam):")
+        self.stress_level_slider = self.create_slider(self.input_frame, 5, "Tingkat Stres (1-10):", 1, 10)
+        self.physical_activity_entry = self.create_entry(self.input_frame, 6, "Aktivitas Fisik (menit/hari):")
         self.bmi_var = ctk.StringVar(value="Normal")
-        self.create_dropdown(7, "Kategori BMI:", list(self.bmi_map.keys()), self.bmi_var)
-        self.heart_rate_entry = self.create_entry(8, "Detak Jantung (bpm):")
+        self.create_dropdown(self.input_frame, 7, "Kategori BMI:", list(self.bmi_map.keys()), self.bmi_var)
+        self.heart_rate_entry = self.create_entry(self.input_frame, 8, "Detak Jantung (bpm):")
         self.sleep_disorder_var = ctk.StringVar(value="Tidak Ada")
-        self.create_dropdown(9, "Gangguan Tidur:", list(self.sleep_disorder_map.keys()), self.sleep_disorder_var)
+        self.create_dropdown(self.input_frame, 9, "Gangguan Tidur:", list(self.sleep_disorder_map.keys()), self.sleep_disorder_var)
         self.blood_pressure_var = ctk.StringVar(value="Normal")
-        self.create_dropdown(10, "Tekanan Darah:", list(self.blood_pressure_map.keys()), self.blood_pressure_var)
-        self.daily_steps_entry = self.create_entry(11, "Jumlah Langkah Harian:")
+        self.create_dropdown(self.input_frame, 10, "Tekanan Darah:", list(self.blood_pressure_map.keys()), self.blood_pressure_var)
+        self.daily_steps_entry = self.create_entry(self.input_frame, 11, "Jumlah Langkah Harian:")
 
-        self.predict_button = ctk.CTkButton(self.main_frame, text="Evaluasi", command=self.submit_prediction, height=40, font=ctk.CTkFont(size=16, weight="bold"))
-        self.predict_button.grid(row=3, column=0, pady=10)
+        self.predict_button = ctk.CTkButton(self.left_column, text="Evaluasi", command=self.submit_prediction, height=45, font=ctk.CTkFont(size=16, weight="bold"))
+        self.predict_button.grid(row=3, column=0, pady=10, padx=10, sticky="ew")
 
-        # Result Textbox
-        self.result_textbox = ctk.CTkTextbox(self.main_frame, height=200)
-        self.result_textbox.grid(row=4, column=0, padx=20, pady=(0, 20), sticky="nsew")
-        self.result_textbox.insert("0.0", "Hasil akan ditampilkan di sini...\n")
-        self.result_textbox.configure(state="disabled")
+        # --------------------
+        # RIGHT COLUMN (Dashboard Results)
+        # --------------------
+        self.right_column = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        self.right_column.grid(row=0, column=1, sticky="nsew", padx=(10, 15), pady=10)
+        self.right_column.grid_columnconfigure(0, weight=1)
+        self.right_column.grid_rowconfigure(2, weight=0)
+        self.right_column.grid_rowconfigure(3, weight=1)
+        self.right_column.grid_rowconfigure(4, weight=0)
+
+        # Title
+        self.dashboard_title = ctk.CTkLabel(self.right_column, text="Dashboard Hasil & Rekomendasi", font=ctk.CTkFont(size=22, weight="bold"))
+        self.dashboard_title.grid(row=0, column=0, padx=10, pady=(15, 10))
+
+        # 1. Final Status Card (Displays result class BAIK, CUKUP, BURUK beautifully)
+        self.status_card = ctk.CTkFrame(self.right_column, fg_color="#1a1a1a", border_width=2, border_color="#333333")
+        self.status_card.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
+        self.status_card.grid_columnconfigure(0, weight=1)
         
+        self.status_title_label = ctk.CTkLabel(self.status_card, text="KUALITAS TIDUR AKHIR", font=ctk.CTkFont(size=11, weight="bold"), text_color="#888888")
+        self.status_title_label.grid(row=0, column=0, pady=(12, 0))
+        
+        self.final_status_label = ctk.CTkLabel(self.status_card, text="BELUM DIEVALUASI", font=ctk.CTkFont(size=30, weight="bold"), text_color="#555555")
+        self.final_status_label.grid(row=1, column=0, pady=(2, 12))
+
+        # 2. Score Dashboard Frame (Visual Hybrid Combined Scores + Recommendations)
+        self.scores_frame = ctk.CTkFrame(self.right_column)
+        self.scores_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+        self.scores_frame.grid_columnconfigure(1, weight=1)
+        self.scores_frame.grid_rowconfigure(4, weight=1)
+        
+        self.scores_title = ctk.CTkLabel(self.scores_frame, text="Bobot Skor Akhir (Formula Hybrid)", font=ctk.CTkFont(size=14, weight="bold"))
+        self.scores_title.grid(row=0, column=0, columnspan=3, padx=15, pady=(12, 5), sticky="w")
+
+        # Progress bar: BAIK
+        self.lbl_baik_title = ctk.CTkLabel(self.scores_frame, text="BAIK", font=ctk.CTkFont(weight="bold"))
+        self.lbl_baik_title.grid(row=1, column=0, padx=15, pady=6, sticky="w")
+        self.pb_combined_baik = ctk.CTkProgressBar(self.scores_frame, progress_color="#2ecc71", height=12)
+        self.pb_combined_baik.grid(row=1, column=1, padx=10, pady=6, sticky="ew")
+        self.pb_combined_baik.set(0)
+        self.lbl_combined_baik_val = ctk.CTkLabel(self.scores_frame, text="0.000 (0.0%)", font=ctk.CTkFont(size=12))
+        self.lbl_combined_baik_val.grid(row=1, column=2, padx=15, pady=6, sticky="e")
+
+        # Progress bar: CUKUP
+        self.lbl_cukup_title = ctk.CTkLabel(self.scores_frame, text="CUKUP", font=ctk.CTkFont(weight="bold"))
+        self.lbl_cukup_title.grid(row=2, column=0, padx=15, pady=6, sticky="w")
+        self.pb_combined_cukup = ctk.CTkProgressBar(self.scores_frame, progress_color="#f1c40f", height=12)
+        self.pb_combined_cukup.grid(row=2, column=1, padx=10, pady=6, sticky="ew")
+        self.pb_combined_cukup.set(0)
+        self.lbl_combined_cukup_val = ctk.CTkLabel(self.scores_frame, text="0.000 (0.0%)", font=ctk.CTkFont(size=12))
+        self.lbl_combined_cukup_val.grid(row=2, column=2, padx=15, pady=6, sticky="e")
+
+        # Progress bar: BURUK
+        self.lbl_buruk_title = ctk.CTkLabel(self.scores_frame, text="BURUK", font=ctk.CTkFont(weight="bold"))
+        self.lbl_buruk_title.grid(row=3, column=0, padx=15, pady=6, sticky="w")
+        self.pb_combined_buruk = ctk.CTkProgressBar(self.scores_frame, progress_color="#e74c3c", height=12)
+        self.pb_combined_buruk.grid(row=3, column=1, padx=10, pady=6, sticky="ew")
+        self.pb_combined_buruk.set(0)
+        self.lbl_combined_buruk_val = ctk.CTkLabel(self.scores_frame, text="0.000 (0.0%)", font=ctk.CTkFont(size=12))
+        self.lbl_combined_buruk_val.grid(row=3, column=2, padx=15, pady=6, sticky="e")
+
+        # Recommendation textbox inside scores_frame
+        self.reco_frame = ctk.CTkFrame(self.scores_frame, fg_color="transparent")
+        self.reco_frame.grid(row=4, column=0, columnspan=3, padx=15, pady=(10, 12), sticky="nsew")
+        self.reco_frame.grid_columnconfigure(0, weight=1)
+        self.reco_frame.grid_rowconfigure(1, weight=1)
+        
+        self.reco_title = ctk.CTkLabel(self.reco_frame, text="Saran / Rekomendasi Klinis:", font=ctk.CTkFont(size=13, weight="bold"), text_color="#2196F3")
+        self.reco_title.grid(row=0, column=0, sticky="w", pady=(0, 2))
+        
+        self.reco_text = ctk.CTkTextbox(self.reco_frame, height=75, wrap="word", font=ctk.CTkFont(size=12))
+        self.reco_text.grid(row=1, column=0, sticky="nsew")
+        self.reco_text.insert("0.0", "Harap lengkapi formulir masukan di sebelah kiri, lalu tekan tombol 'Evaluasi' untuk menampilkan hasil analisis hibrida beserta saran rekomendasi kesehatan.")
+        self.reco_text.configure(state="disabled")
+
+        # 3. Details Container (Displays CF and RF directly side-by-side)
+        self.details_container = ctk.CTkFrame(self.right_column, fg_color="transparent")
+        self.details_container.grid(row=3, column=0, padx=10, pady=(5, 5), sticky="nsew")
+        self.details_container.grid_columnconfigure(0, weight=1, minsize=230)
+        self.details_container.grid_columnconfigure(1, weight=1, minsize=230)
+        self.details_container.grid_rowconfigure(0, weight=1)
+
+        # --- Left Side: Certainty Factor (CF) ---
+        self.cf_details_frame = ctk.CTkFrame(self.details_container)
+        self.cf_details_frame.grid(row=0, column=0, padx=(0, 5), pady=0, sticky="nsew")
+        self.cf_details_frame.grid_columnconfigure(0, weight=1)
+        self.cf_details_frame.grid_rowconfigure(2, weight=1)
+
+        self.lbl_cf_title = ctk.CTkLabel(self.cf_details_frame, text="Certainty Factor (CF) Engine", font=ctk.CTkFont(size=12, weight="bold"), text_color="#2196F3")
+        self.lbl_cf_title.grid(row=0, column=0, padx=10, pady=(8, 2), sticky="w")
+
+        self.lbl_cf_summary = ctk.CTkLabel(self.cf_details_frame, text="Keputusan CF: - (CF value: 0.000)", font=ctk.CTkFont(size=11, weight="bold"))
+        self.lbl_cf_summary.grid(row=1, column=0, padx=10, pady=2, sticky="w")
+        
+        self.cf_rules_text = ctk.CTkTextbox(self.cf_details_frame, wrap="word", height=90, font=ctk.CTkFont(size=11))
+        self.cf_rules_text.grid(row=2, column=0, padx=10, pady=(2, 8), sticky="nsew")
+        self.cf_rules_text.insert("0.0", "Aturan terpicu (Fired Rules) pakar akan dimunculkan di sini...")
+        self.cf_rules_text.configure(state="disabled")
+
+        # --- Right Side: Random Forest (RF) ---
+        self.rf_details_frame = ctk.CTkFrame(self.details_container)
+        self.rf_details_frame.grid(row=0, column=1, padx=(5, 0), pady=0, sticky="nsew")
+        self.rf_details_frame.grid_columnconfigure(1, weight=1)
+
+        self.lbl_rf_title = ctk.CTkLabel(self.rf_details_frame, text="Random Forest (RF) Model", font=ctk.CTkFont(size=12, weight="bold"), text_color="#2196F3")
+        self.lbl_rf_title.grid(row=0, column=0, columnspan=3, padx=10, pady=(8, 2), sticky="w")
+
+        self.lbl_rf_summary = ctk.CTkLabel(self.rf_details_frame, text="Prediksi RF: -", font=ctk.CTkFont(size=11, weight="bold"))
+        self.lbl_rf_summary.grid(row=1, column=0, columnspan=3, padx=10, pady=2, sticky="w")
+        
+        # RF Prob: BAIK
+        self.lbl_rf_baik = ctk.CTkLabel(self.rf_details_frame, text="BAIK:", font=ctk.CTkFont(size=11))
+        self.lbl_rf_baik.grid(row=2, column=0, padx=10, pady=1, sticky="w")
+        self.pb_rf_baik = ctk.CTkProgressBar(self.rf_details_frame, progress_color="#2ecc71", height=8)
+        self.pb_rf_baik.grid(row=2, column=1, padx=5, pady=1, sticky="ew")
+        self.pb_rf_baik.set(0)
+        self.lbl_rf_baik_val = ctk.CTkLabel(self.rf_details_frame, text="0%", font=ctk.CTkFont(size=11))
+        self.lbl_rf_baik_val.grid(row=2, column=2, padx=10, pady=1, sticky="e")
+
+        # RF Prob: CUKUP
+        self.lbl_rf_cukup = ctk.CTkLabel(self.rf_details_frame, text="CUKUP:", font=ctk.CTkFont(size=11))
+        self.lbl_rf_cukup.grid(row=3, column=0, padx=10, pady=1, sticky="w")
+        self.pb_rf_cukup = ctk.CTkProgressBar(self.rf_details_frame, progress_color="#f1c40f", height=8)
+        self.pb_rf_cukup.grid(row=3, column=1, padx=5, pady=1, sticky="ew")
+        self.pb_rf_cukup.set(0)
+        self.lbl_rf_cukup_val = ctk.CTkLabel(self.rf_details_frame, text="0%", font=ctk.CTkFont(size=11))
+        self.lbl_rf_cukup_val.grid(row=3, column=2, padx=10, pady=1, sticky="e")
+
+        # RF Prob: BURUK
+        self.lbl_rf_buruk = ctk.CTkLabel(self.rf_details_frame, text="BURUK:", font=ctk.CTkFont(size=11))
+        self.lbl_rf_buruk.grid(row=4, column=0, padx=10, pady=1, sticky="w")
+        self.pb_rf_buruk = ctk.CTkProgressBar(self.rf_details_frame, progress_color="#e74c3c", height=8)
+        self.pb_rf_buruk.grid(row=4, column=1, padx=5, pady=1, sticky="ew")
+        self.pb_rf_buruk.set(0)
+        self.lbl_rf_buruk_val = ctk.CTkLabel(self.rf_details_frame, text="0%", font=ctk.CTkFont(size=11))
+        self.lbl_rf_buruk_val.grid(row=4, column=2, padx=10, pady=1, sticky="e")
+
+        # 4. Formula Explanation Card
+        self.formula_frame = ctk.CTkFrame(self.right_column, fg_color="#1d1d1d", border_width=1, border_color="#333333")
+        self.formula_frame.grid(row=4, column=0, padx=10, pady=(5, 10), sticky="ew")
+        self.formula_frame.grid_columnconfigure(0, weight=1)
+        
+        formula_text = (
+            "Keterangan Formula Hybrid:\n"
+            "Skor Akhir = (0.4 * CF_score) + (0.6 * RF_probability)\n"
+            "Keputusan final diambil dari kelas dengan Skor Akhir tertinggi."
+        )
+        self.lbl_formula_desc = ctk.CTkLabel(
+            self.formula_frame, 
+            text=formula_text, 
+            font=ctk.CTkFont(size=11, slant="italic"), 
+            justify="center",
+            text_color="#888888"
+        )
+        self.lbl_formula_desc.grid(row=0, column=0, padx=10, pady=10)
+
         self.load_history()
 
-    def create_entry(self, row, label_text):
-        label = ctk.CTkLabel(self.input_frame, text=label_text)
-        label.grid(row=row, column=0, padx=10, pady=10, sticky="w")
-        entry = ctk.CTkEntry(self.input_frame)
-        entry.grid(row=row, column=1, padx=10, pady=10, sticky="ew")
+    def create_entry(self, parent, row, label_text):
+        label = ctk.CTkLabel(parent, text=label_text)
+        label.grid(row=row, column=0, padx=10, pady=8, sticky="w")
+        entry = ctk.CTkEntry(parent)
+        entry.grid(row=row, column=1, padx=10, pady=8, sticky="ew")
         return entry
 
-    def create_dropdown(self, row, label_text, values, variable):
-        label = ctk.CTkLabel(self.input_frame, text=label_text)
-        label.grid(row=row, column=0, padx=10, pady=10, sticky="w")
-        menu = ctk.CTkOptionMenu(self.input_frame, values=values, variable=variable)
-        menu.grid(row=row, column=1, padx=10, pady=10, sticky="ew")
+    def create_dropdown(self, parent, row, label_text, values, variable):
+        label = ctk.CTkLabel(parent, text=label_text)
+        label.grid(row=row, column=0, padx=10, pady=8, sticky="w")
+        menu = ctk.CTkOptionMenu(parent, values=values, variable=variable)
+        menu.grid(row=row, column=1, padx=10, pady=8, sticky="ew")
         return menu
 
-    def create_slider(self, row, label_text, min_val, max_val):
-        label = ctk.CTkLabel(self.input_frame, text=label_text)
-        label.grid(row=row, column=0, padx=10, pady=10, sticky="w")
+    def create_slider(self, parent, row, label_text, min_val, max_val):
+        label = ctk.CTkLabel(parent, text=label_text)
+        label.grid(row=row, column=0, padx=10, pady=8, sticky="w")
         slider_var = ctk.IntVar(value=5)
-        slider = ctk.CTkSlider(self.input_frame, from_=min_val, to=max_val, number_of_steps=9, variable=slider_var)
-        slider.grid(row=row, column=1, padx=10, pady=10, sticky="ew")
-        val_label = ctk.CTkLabel(self.input_frame, textvariable=slider_var)
-        val_label.grid(row=row, column=2, padx=10, pady=10)
+        slider = ctk.CTkSlider(parent, from_=min_val, to=max_val, number_of_steps=9, variable=slider_var)
+        slider.grid(row=row, column=1, padx=10, pady=8, sticky="ew")
+        val_label = ctk.CTkLabel(parent, textvariable=slider_var)
+        val_label.grid(row=row, column=2, padx=10, pady=8)
         return slider_var
 
     def new_evaluation(self):
@@ -196,11 +361,35 @@ class App(ctk.CTk):
         self.blood_pressure_var.set("Normal")
         self.daily_steps_entry.delete(0, 'end')
 
-        # Reset result box
-        self.result_textbox.configure(state="normal")
-        self.result_textbox.delete("0.0", "end")
-        self.result_textbox.insert("0.0", "Hasil akan ditampilkan di sini...\n")
-        self.result_textbox.configure(state="disabled")
+        # Reset dashboard elements to default
+        self.final_status_label.configure(text="BELUM DIEVALUASI", text_color="#555555")
+        self.status_card.configure(border_color="#333333")
+        
+        self.pb_combined_baik.set(0)
+        self.pb_combined_cukup.set(0)
+        self.pb_combined_buruk.set(0)
+        self.lbl_combined_baik_val.configure(text="0.000 (0.0%)")
+        self.lbl_combined_cukup_val.configure(text="0.000 (0.0%)")
+        self.lbl_combined_buruk_val.configure(text="0.000 (0.0%)")
+
+        self.reco_text.configure(state="normal")
+        self.reco_text.delete("0.0", "end")
+        self.reco_text.insert("0.0", "Harap lengkapi formulir masukan di sebelah kiri, lalu tekan tombol 'Evaluasi' untuk menampilkan hasil analisis hibrida beserta saran rekomendasi kesehatan.")
+        self.reco_text.configure(state="disabled")
+
+        self.lbl_cf_summary.configure(text="Keputusan CF: - (CF value: 0.000)")
+        self.cf_rules_text.configure(state="normal")
+        self.cf_rules_text.delete("0.0", "end")
+        self.cf_rules_text.insert("0.0", "Aturan terpicu (Fired Rules) pakar akan dimunculkan di sini...")
+        self.cf_rules_text.configure(state="disabled")
+
+        self.lbl_rf_summary.configure(text="Prediksi RF: -")
+        self.pb_rf_baik.set(0)
+        self.pb_rf_cukup.set(0)
+        self.pb_rf_buruk.set(0)
+        self.lbl_rf_baik_val.configure(text="0%")
+        self.lbl_rf_cukup_val.configure(text="0%")
+        self.lbl_rf_buruk_val.configure(text="0%")
 
         # Enable evaluate button
         self.predict_button.configure(state="normal")
@@ -208,7 +397,7 @@ class App(ctk.CTk):
 
     def submit_prediction(self):
         if self.is_preview_mode:
-            return  # Prevent submission if somehow button is clicked in preview mode
+            return  # Prevent submission if in preview mode
 
         # Validate that no entry is empty
         name = self.name_entry.get().strip()
@@ -246,8 +435,6 @@ class App(ctk.CTk):
                 self.display_result(data)
                 self.load_history() # Refresh history
                 
-                # We optionally enter preview mode of this new evaluation, or leave it as new.
-                # Since user just ran it, they shouldn't run identical easily, so let's set it as preview mode.
                 self.is_preview_mode = True
                 self.current_consultation_id = data.get("consultation_id")
                 self.predict_button.configure(state="disabled")
@@ -256,7 +443,7 @@ class App(ctk.CTk):
             else:
                 messagebox.showerror("Error API", f"Gagal mendapatkan prediksi: {response.text}")
                 
-        except ValueError as e:
+        except ValueError:
             messagebox.showerror("Input Error", "Harap pastikan semua input numerik berisi angka yang valid.")
         except requests.exceptions.ConnectionError:
             messagebox.showerror("Connection Error", "Tidak dapat terhubung ke server Flask. Pastikan app.py berjalan di port 5000.")
@@ -297,11 +484,83 @@ class App(ctk.CTk):
         return output
 
     def display_result(self, data, is_preview=False):
-        self.result_textbox.configure(state="normal")
-        self.result_textbox.delete("0.0", "end")
-        output = self.generate_report_text(data, is_preview)
-        self.result_textbox.insert("0.0", output)
-        self.result_textbox.configure(state="disabled")
+        final_pred = data.get('final_prediction') or data.get('final_class', 'N/A')
+        
+        # 1. Update Final Status Card color & text
+        if final_pred == "BAIK":
+            self.final_status_label.configure(text="BAIK (GOOD)", text_color="#2ecc71")
+            self.status_card.configure(border_color="#2ecc71")
+            reco_msg = "Kualitas tidur Anda tergolong BAIK. Pertahankan gaya hidup sehat Anda dengan tidur yang teratur antara 7-9 jam per hari, melakukan aktivitas fisik minimal 30 menit, dan menjaga pikiran tetap rileks sebelum tidur."
+        elif final_pred == "CUKUP":
+            self.final_status_label.configure(text="CUKUP (NORMAL)", text_color="#f1c40f")
+            self.status_card.configure(border_color="#f1c40f")
+            reco_msg = "Kualitas tidur Anda CUKUP. Cobalah untuk menyisihkan waktu tidur yang konsisten, membatasi konsumsi kafein atau penggunaan gadget minimal 1 jam sebelum tidur, serta kelola tingkat stres harian Anda agar tidur lebih berkualitas."
+        elif final_pred == "BURUK":
+            self.final_status_label.configure(text="BURUK (POOR)", text_color="#e74c3c")
+            self.status_card.configure(border_color="#e74c3c")
+            reco_msg = "Kualitas tidur Anda BURUK. Anda sangat disarankan untuk merancang jadwal tidur yang disiplin, meminimalkan layar gadget di kamar, melakukan teknik relaksasi pernapasan untuk menurunkan stres, serta segera berkonsultasi dengan dokter apabila keluhan insomnia atau gangguan pernapasan terus berlanjut."
+        else:
+            self.final_status_label.configure(text=final_pred, text_color="white")
+            self.status_card.configure(border_color="#333333")
+            reco_msg = f"Hasil klasifikasi tidak terdefinisi ({final_pred})."
+
+        # 2. Update Recommendation
+        self.reco_text.configure(state="normal")
+        self.reco_text.delete("0.0", "end")
+        self.reco_text.insert("0.0", reco_msg)
+        self.reco_text.configure(state="disabled")
+
+        # 3. Update Combined Score progress bars & text
+        combined = data.get('combined_scores', {})
+        score_baik = combined.get('BAIK', 0.0)
+        score_cukup = combined.get('CUKUP', 0.0)
+        score_buruk = combined.get('BURUK', 0.0)
+
+        self.pb_combined_baik.set(score_baik)
+        self.pb_combined_cukup.set(score_cukup)
+        self.pb_combined_buruk.set(score_buruk)
+
+        self.lbl_combined_baik_val.configure(text=f"{score_baik:.3f} ({score_baik*100:.1f}%)")
+        self.lbl_combined_cukup_val.configure(text=f"{score_cukup:.3f} ({score_cukup*100:.1f}%)")
+        self.lbl_combined_buruk_val.configure(text=f"{score_buruk:.3f} ({score_buruk*100:.1f}%)")
+
+        # 4. Update Certainty Factor Details Tab
+        cf_res = data.get('cf_result', {})
+        cf_class = cf_res.get('class', 'N/A')
+        cf_val = cf_res.get('cf_value', 0.0)
+        self.lbl_cf_summary.configure(text=f"Keputusan CF: {cf_class} (CF value: {cf_val:.3f})")
+        
+        fired = cf_res.get('fired_rules', [])
+        rules_output = ""
+        if fired:
+            for r in fired:
+                rules_output += f"• [{r['id']}] {r['desc']} (CF: +{r['cf_added']})\n"
+        else:
+            rules_output = "Tidak ada aturan pakar (rules) Certainty Factor yang terpicu untuk input saat ini."
+
+        self.cf_rules_text.configure(state="normal")
+        self.cf_rules_text.delete("0.0", "end")
+        self.cf_rules_text.insert("0.0", rules_output)
+        self.cf_rules_text.configure(state="disabled")
+
+        # 5. Update Random Forest Details Tab
+        rf_res = data.get('rf_result', {})
+        rf_class = rf_res.get('prediction', 'N/A')
+        probs = rf_res.get('probabilities', {})
+        p_baik = probs.get('BAIK', 0.0)
+        p_cukup = probs.get('CUKUP', 0.0)
+        p_buruk = probs.get('BURUK', 0.0)
+
+        max_prob = max(p_baik, p_cukup, p_buruk)
+        self.lbl_rf_summary.configure(text=f"Prediksi RF: {rf_class} (Keyakinan: {max_prob*100:.1f}%)")
+        
+        self.pb_rf_baik.set(p_baik)
+        self.pb_rf_cukup.set(p_cukup)
+        self.pb_rf_buruk.set(p_buruk)
+
+        self.lbl_rf_baik_val.configure(text=f"{p_baik*100:.0f}%")
+        self.lbl_rf_cukup_val.configure(text=f"{p_cukup*100:.0f}%")
+        self.lbl_rf_buruk_val.configure(text=f"{p_buruk*100:.0f}%")
 
     def load_history(self):
         try:
@@ -381,7 +640,7 @@ class App(ctk.CTk):
         self.daily_steps_entry.delete(0, 'end')
         self.daily_steps_entry.insert(0, str(data.get('daily_steps', '')))
         
-        # Populate Result Textbox
+        # Populate Dashboard widgets
         self.display_result(data, is_preview=True)
 
     def delete_history(self, data):
