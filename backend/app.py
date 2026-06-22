@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import os
 import json
 from models import db, Consultation, Result
@@ -23,6 +23,10 @@ try:
 except Exception as e:
     print(f"Warning: {e}")
     rf_model = None
+
+@app.route('/')
+def index():
+    return send_from_directory(os.path.join(os.path.dirname(__file__), '..'), 'index.html')
 
 @app.route('/health', methods=['GET'])
 def health():

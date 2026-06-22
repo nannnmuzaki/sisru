@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sisru - Sistem Pakar Evaluasi Kualitas Tidur</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        midnight: {
+                            DEFAULT: '#090e1a',
+                            dark: '#050810',
+                            card: '#161f38',
+                            border: '#1f2d54',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090e1a;
+            color: #e2e8f0;
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090e1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1f2d54;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3b82f6;
+        }
+        /* Glow animations */
+        .glow-baik {
+            text-shadow: 0 0 20px rgba(52, 211, 153, 0.6);
+        }
+        .glow-cukup {
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+        }
+        .glow-buruk {
+            text-shadow: 0 0 20px rgba(248, 113, 113, 0.6);
+        }
+        /* Custom styled Range Input Slider */
+        .slider-stress {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 9999px;
+            background: linear-gradient(to right, #8b5cf6 0%, #22d3ee 44.4%, #070b15 44.4%, #070b15 100%);
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+            transition: background 0.15s ease-in-out;
+        }
+        .slider-stress::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 9999px;
+            background: #ffffff;
+            border: 3.5px solid #8b5cf6;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.9);
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        .slider-stress::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+            background-color: #f5f3ff;
+            box-shadow: 0 0 14px rgba(139, 92, 246, 1), 0 0 4px rgba(34, 211, 238, 0.5);
+        }
+        .slider-stress::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 9999px;
+            background: #ffffff;
+            border: 3.5px solid #8b5cf6;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.9);
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        .slider-stress::-moz-range-thumb:hover {
+            transform: scale(1.25);
+            background-color: #f5f3ff;
+            box-shadow: 0 0 14px rgba(139, 92, 246, 1), 0 0 4px rgba(34, 211, 238, 0.5);
+        }
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-slate-800/80 bg-[#090e1a]/80 backdrop-blur-md sticky top-0 z-30 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-violet-500/20">
+                    <i class="fa-solid fa-moon text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">Sisru</h1>
+                    <p class="text-xs text-cyan-400 font-medium">Sistem Pakar Evaluasi Kualitas Tidur</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 text-xs text-slate-400">
+                <span class="px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700/50 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Backend API Connected
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+
+        <!-- KOLOM KIRI: Sidebar Riwayat -->
+        <aside class="flex flex-col h-[calc(100vh-120px)] lg:sticky lg:top-24 gap-4">
+            <div class="bg-[#161f38]/75 backdrop-blur-md border border-slate-700/30 rounded-[1.5rem] shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_15px_rgba(124,58,237,0.03)] p-5 flex flex-col h-full">
+                <!-- Sidebar Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800/80">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-clock-rotate-left text-violet-400"></i>
+                        <h2 class="font-bold text-lg text-slate-200">Riwayat</h2>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="newConsultation()" title="Konsultasi Baru" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-violet-600/80 text-white flex items-center justify-center transition duration-200 active:scale-95">
+                            <i class="fa-solid fa-plus text-sm"></i>
+                        </button>
+                        <button onclick="loadHistory()" title="Refresh" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition duration-200 active:scale-95">
+                            <i class="fa-solid fa-rotate text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Input for history -->
+                <div class="mt-3 relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="searchHistory" oninput="filterHistory()" placeholder="Cari nama..." class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl pl-9 pr-3 py-2 text-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 transition duration-200">
+                </div>
+
+                <!-- History List -->
+                <div id="historyList" class="flex-1 overflow-y-auto mt-4 space-y-2.5 pr-1">
+                    <!-- Loading state -->
+                    <div class="text-center py-8 text-slate-500 text-sm">
+                        <i class="fa-solid fa-circle-notch animate-spin text-violet-500 text-lg mb-2"></i>
+                        <p>Memuat riwayat...</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KOLOM KANAN: Panel Utama (Form & Diagnosis) -->
+        <section class="space-y-6">
+
+            <!-- WELCOME & OVERVIEW CARD -->
+            <div id="welcomeCard" class="bg-gradient-to-r from-violet-950/40 via-[#161f38]/70 to-cyan-950/40 backdrop-blur-md border border-slate-800/80 rounded-[1.5rem] shadow-xl p-6 relative overflow-hidden transition-all duration-300">
+                <div class="absolute -right-16 -top-16 w-36 h-36 bg-violet-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -left-16 -bottom-16 w-36 h-36 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <button onclick="document.getElementById('welcomeCard').remove()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 transition duration-150" title="Tutup penjelasan">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+                <div class="flex flex-col md:flex-row gap-5 items-start pr-4">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-500 to-cyan-400 flex items-center justify-center text-white shadow-lg flex-shrink-0">
+                        <i class="fa-solid fa-circle-info text-xl"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <h2 class="text-lg font-bold text-white tracking-tight">Selamat Datang di Sisru! 🌙</h2>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            <strong>Sisru (Sistem Pakar Evaluasi Kualitas Tidur)</strong> dirancang untuk membantu Anda memahami kondisi tidur secara mandiri. Sistem ini memadukan **Aturan Dokter Spesialis (Certainty Factor)** dengan **Kecerdasan Buatan (AI Random Forest)** untuk menganalisis pola tidur Anda secara holistik.
+                        </p>
+                        <p class="text-slate-400 text-xs leading-relaxed">
+                            Isi data kesehatan dan kebiasaan harian Anda pada formulir di bawah. Sistem akan memproses data Anda untuk menyajikan kesimpulan kualitas tidur dan rekomendasi medis sederhana tanpa menampilkan angka klinis rumit yang membingungkan.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORM PANEL -->
+            <div id="formPanel" class="bg-[#161f38]/75 backdrop-blur-md border border-slate-700/30 rounded-[1.5rem] shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_15px_rgba(124,58,237,0.03)] p-6 md:p-8 relative overflow-hidden">
+                <!-- Decorative background elements -->
+                <div class="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="mb-6">
+                    <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-question text-cyan-400"></i>
+                        Formulir Evaluasi Medis
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">Silakan lengkapi parameter klinis dan gaya hidup di bawah untuk mendapatkan analisis kualitas tidur hibrida.</p>
+                </div>
+
+                <form id="evaluationForm" onsubmit="submitEvaluation(event)" class="space-y-6">
+                    <!-- Section 1: Identitas -->
+                    <div>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-violet-400 mb-3.5 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+                            Identitas
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Nama -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Nama Lengkap</span>
+                                    <i onclick="showInfoModal('Nama', 'Nama lengkap Anda digunakan untuk pencatatan riwayat medis konsultasi secara aman.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <input type="text" id="name" required placeholder="Masukkan nama..." class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                            </div>
+                            <!-- Jenis Kelamin -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Jenis Kelamin</span>
+                                    <i onclick="showInfoModal('Jenis Kelamin', 'Jenis kelamin memengaruhi profil hormonal, denyut nadi istirahat, dan kecenderungan metabolisme tubuh yang berdampak pada regulasi pola sirkadian tidur.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <select id="gender" required class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                                    <option value="Laki-laki">Laki-laki</option>
+                                    <option value="Perempuan">Perempuan</option>
+                                </select>
+                            </div>
+                            <!-- Usia -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Usia (Tahun)</span>
+                                    <i onclick="showInfoModal('Usia', 'Faktor umur menentukan regulasi hormon melatonin secara alami dan jumlah jam tidur ideal harian Anda yang direkomendasikan medis.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <input type="number" id="age" required min="1" max="120" placeholder="Contoh: 25" class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                            </div>
+                            <!-- Pekerjaan -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Pekerjaan</span>
+                                    <i onclick="showInfoModal('Pekerjaan', 'Jenis aktivitas profesional harian memengaruhi jam biologis (ritme sirkadian), tingkat keletihan mental, dan paparan cahaya biru.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <select id="occupation" required class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                                    <option value="Pelajar/Mahasiswa">Pelajar/Mahasiswa</option>
+                                    <option value="Software Engineer">Software Engineer</option>
+                                    <option value="Dokter">Dokter</option>
+                                    <option value="Guru">Guru</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Data Vital -->
+                    <div>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-rose-400 mb-3.5 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                            Data Vital
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Kategori BMI -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Kategori BMI</span>
+                                    <i onclick="showInfoModal('Kategori BMI', 'Indeks Massa Tubuh (Body Mass Index). Kategori berat badan berlebih (overweight/obese) meningkatkan risiko medis penyempitan jalur pernapasan atas saat tidur.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <select id="bmi_category" required class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                                    <option value="Normal">Normal</option>
+                                    <option value="Kelebihan Berat Badan">Kelebihan Berat Badan</option>
+                                    <option value="Obesitas">Obesitas</option>
+                                </select>
+                            </div>
+                            <!-- Detak Jantung -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Detak Jantung (bpm)</span>
+                                    <i onclick="showInfoModal('Detak Jantung', 'Resting Heart Rate (RHR). Denyut nadi per menit saat istirahat. Detak jantung yang tinggi (>80 bpm) mengindikasikan beban kerja kardiovaskular tinggi atau kurangnya pemulihan parasimpatis.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <input type="number" id="heart_rate" required min="30" max="220" placeholder="Contoh: 72" class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                            </div>
+                            <!-- Tekanan Darah -->
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Tekanan Darah</span>
+                                    <i onclick="showInfoModal('Tekanan Darah', 'Klasifikasi tekanan darah Anda secara klinis. Tekanan darah tinggi atau meningkat berkolerasi dengan peningkatan aktivitas saraf simpatik yang mengganggu tidur nyenyak.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <select id="blood_pressure" required class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                                    <option value="Normal">Normal</option>
+                                    <option value="Meningkat">Meningkat</option>
+                                    <option value="Tinggi">Tinggi</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Gaya Hidup & Tidur -->
+                    <div>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-3.5 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                            Gaya Hidup & Tidur
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Durasi Tidur -->
+                            <div class="col-span-1">
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Durasi Tidur (Jam/Hari)</span>
+                                    <i onclick="showInfoModal('Durasi Tidur', 'Jumlah jam tidur aktual dalam waktu 24 jam. Durasi tidur ideal bagi orang dewasa berkisar antara 7-8 jam per hari untuk menjaga pemulihan sel organ tubuh secara optimal.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <input type="number" step="0.1" id="sleep_duration" required min="1" max="24" placeholder="Contoh: 7.2" class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-650 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                            </div>
+                            <!-- Aktivitas Fisik -->
+                            <div class="col-span-1">
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Aktivitas Fisik (Menit/Hari)</span>
+                                    <i onclick="showInfoModal('Aktivitas Fisik', 'Durasi olahraga atau aktivitas fisik aktif harian Anda. Gerakan fisik membantu sekresi hormon adenosin yang secara alami mendatangkan rasa kantuk yang dalam (*deep sleep*).')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <input type="number" id="physical_activity" required min="0" max="1440" placeholder="Contoh: 45" class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-650 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                            </div>
+                            <!-- Gangguan Tidur -->
+                            <div class="col-span-1">
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Gangguan Tidur</span>
+                                    <i onclick="showInfoModal('Gangguan Tidur', 'Riwayat gangguan klinis tidur yang pernah terdiagnosis secara klinis, seperti Insomnia (sulit memulai tidur) atau Sleep Apnea (napas terhenti sementara).')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <select id="sleep_disorder" required class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                                    <option value="Tidak Ada">Tidak Ada</option>
+                                    <option value="Insomnia">Insomnia</option>
+                                    <option value="Sleep Apnea">Sleep Apnea</option>
+                                </select>
+                            </div>
+                            <!-- Tingkat Stres Slider -->
+                            <div class="col-span-1 sm:col-span-2">
+                                <label class="block text-xs font-medium text-slate-300 mb-2 flex items-center justify-between">
+                                    <span>Tingkat Stres (Skala 1 - 10)</span>
+                                    <i onclick="showInfoModal('Tingkat Stres', 'Skala intensitas stres emosional/mental harian Anda. Stres memicu sekresi hormon kortisol dan adrenalin yang memicu keadaan siaga fisiologis dan merusak fase REM tidur.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <div class="bg-[#070b15] border border-slate-800/80 p-3 rounded-xl shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] flex items-center justify-between">
+                                    <div class="flex items-center space-x-4 w-full">
+                                        <input type="range" id="stress_level" min="1" max="10" value="5" oninput="updateStressSlider(this.value)" class="flex-1 slider-stress">
+                                        <span id="stressVal" class="text-sm font-bold text-violet-400 w-6 text-right">5</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Jumlah Langkah Harian -->
+                            <div class="col-span-1">
+                                <label class="block text-xs font-medium text-slate-300 mb-1.5 flex items-center justify-between">
+                                    <span>Jumlah Langkah Harian</span>
+                                    <i onclick="showInfoModal('Jumlah Langkah Harian', 'Metrik keaktifan bergerak secara makro dalam sehari. Target minimal kesehatan global adalah 10.000 langkah/hari untuk menunjang kebugaran kardiovaskular.')" class="fa-solid fa-circle-info text-cyan-400 hover:text-cyan-300 cursor-pointer text-[13px]"></i>
+                                </label>
+                                <input type="number" id="daily_steps" required min="0" placeholder="Contoh: 8500" class="w-full bg-[#070b15] border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-650 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] focus:outline-none focus:border-violet-500/80 focus:ring-1 focus:ring-violet-500/30 transition duration-200">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button & Loader -->
+                    <div class="flex flex-col items-center pt-2">
+                        <button type="submit" id="submitBtn" class="w-full md:w-64 bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold py-3.5 px-6 rounded-2xl transition duration-300 shadow-lg shadow-violet-500/20 active:scale-[0.98] flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Evaluasi Kualitas Tidur</span>
+                        </button>
+                        
+                        <!-- Mini Loader -->
+                        <div id="loader" class="hidden mt-4 flex items-center space-x-3 text-cyan-400 text-sm">
+                            <i class="fa-solid fa-circle-notch animate-spin text-lg"></i>
+                            <span>Menghitung Kombinasi Hybrid Fusion...</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- RESULT PANEL -->
+            <div id="resultPanel" class="hidden bg-[#161f38]/75 backdrop-blur-md border border-slate-700/30 rounded-[1.5rem] shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_15px_rgba(124,58,237,0.03)] p-6 md:p-8 relative overflow-hidden transition-all duration-500">
+                <div class="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <!-- Result Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-6">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-square-poll-vertical text-emerald-400"></i>
+                        Hasil Diagnosis Hibrida
+                    </h3>
+                    <button onclick="clearResultAndReset()" class="text-xs text-slate-400 hover:text-slate-200 transition">
+                        <i class="fa-solid fa-xmark mr-1"></i> Bersihkan
+                    </button>
+                </div>
+
+                <!-- Main Layout (Reverted to Original GUI-style layout) -->
+                <div class="grid grid-cols-1 lg:grid-cols-[1fr_330px] gap-6">
+                    
+                    <!-- Left Column: Final Status & Fired Rules -->
+                    <div class="space-y-6">
+                        <!-- Final Status Card -->
+                        <div class="bg-[#090e1a]/60 border border-slate-800/60 p-6 rounded-[1.5rem]">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">STATUS KUALITAS TIDUR AKHIR</span>
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span id="resFinalClass" class="text-4xl font-extrabold uppercase tracking-wide">BAIK</span>
+                                <span class="text-[10px] bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded border border-cyan-800 font-semibold">Hasil Hybrid</span>
+                            </div>
+                            <div class="border-t border-slate-850 pt-4">
+                                <p id="resFriendlyDesc" class="text-slate-300 text-sm leading-relaxed">
+                                    Analisis kualitas tidur menunjukkan kecenderungan yang baik secara umum berdasarkan data fisiologis Anda.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Fired Rules Card -->
+                        <div class="space-y-3">
+                            <h4 class="text-xs font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-code-fork"></i>
+                                ATURAN CERTAINTY FACTOR TERPICU (EXPLAINABLE AI)
+                            </h4>
+                            <div id="resFiredRules" class="space-y-2.5">
+                                <!-- Rules injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Rincian Bobot Skor -->
+                    <div class="bg-[#090e1a]/60 border border-slate-800/60 p-6 rounded-[1.5rem] flex flex-col justify-between h-fit space-y-6">
+                        <div class="space-y-4">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-850 pb-2">
+                                <i class="fa-solid fa-chart-simple"></i>
+                                RINCIAN BOBOT SKOR
+                            </h4>
+
+                            <div class="space-y-4 pt-1">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1.5">
+                                        <span class="text-emerald-400 font-medium">Skor BAIK</span>
+                                        <span id="scoreBaik" class="text-slate-400 font-semibold">0.000</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800/60 h-2 rounded-full overflow-hidden">
+                                        <div id="barBaik" class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1.5">
+                                        <span class="text-amber-400 font-medium">Skor CUKUP</span>
+                                        <span id="scoreCukup" class="text-slate-400 font-semibold">0.000</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800/60 h-2 rounded-full overflow-hidden">
+                                        <div id="barCukup" class="bg-amber-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1.5">
+                                        <span class="text-rose-400 font-medium">Skor BURUK</span>
+                                        <span id="scoreBuruk" class="text-slate-400 font-semibold">0.000</span>
+                                    </div>
+                                    <div class="w-full bg-slate-800/60 h-2 rounded-full overflow-hidden">
+                                        <div id="barBuruk" class="bg-red-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-800/80 pt-4 text-xs text-slate-400 space-y-2.5">
+                            <div class="flex justify-between">
+                                <span>CF Predict:</span>
+                                <span id="resCfPredict" class="text-slate-200 font-semibold">BAIK (0.000)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>RF Predict:</span>
+                                <span id="resRfPredict" class="text-slate-200 font-semibold">BAIK</span>
+                            </div>
+                            <div class="text-[10px] text-center italic text-slate-500 border-t border-slate-800/60 pt-3">
+                                Rumus: (0.4 * CF) + (0.6 * RF)
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-900 bg-midnight-dark py-6 text-center text-xs text-slate-600 mt-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <p>© 2026 Sisru Team. Hybrid Artificial Intelligence Expert System.</p>
+        </div>
+    </footer>
+
+    <!-- POPUP INFO MODAL -->
+    <div id="infoModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-[#050810]/80 backdrop-blur-sm" onclick="closeInfoModal()"></div>
+        <!-- Modal Card -->
+        <div class="relative bg-[#161f38] border border-slate-700/30 rounded-[1.5rem] w-full max-w-md shadow-[0_24px_60px_rgba(0,0,0,0.8),0_0_20px_rgba(124,58,237,0.05)] p-6 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div class="absolute -top-12 -right-12 w-24 h-24 bg-violet-600/10 rounded-full blur-2xl"></div>
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-doctor text-violet-400"></i>
+                    <span id="modalTitle">Penjelasan Medis</span>
+                </h3>
+                <button onclick="closeInfoModal()" class="text-slate-500 hover:text-slate-300 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p id="modalDesc" class="text-slate-300 text-sm leading-relaxed">
+                Penjelasan detail medis akan diisi di sini...
+            </p>
+            <div class="mt-6 flex justify-end">
+                <button onclick="closeInfoModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs py-2 px-5 rounded-xl transition duration-200">
+                    Mengerti
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Global variables
+        const API_URL = "";
+        let allHistories = [];
+        let isPreviewMode = false;
+        let activeConsultationId = null;
+
+        // Mappings for UI Indonesian labels -> Backend English strings
+        const genderMap = { "Laki-laki": "Male", "Perempuan": "Female" };
+        const occupationMap = {
+            "Software Engineer": "Software Engineer",
+            "Dokter": "Doctor",
+            "Guru": "Teacher",
+            "Pelajar/Mahasiswa": "Student",
+            "Lainnya": "Other"
+        };
+        const bmiMap = {
+            "Normal": "Normal Weight",
+            "Kelebihan Berat Badan": "Overweight",
+            "Obesitas": "Obese"
+        };
+        const sleepDisorderMap = {
+            "Tidak Ada": "None",
+            "Insomnia": "Insomnia",
+            "Sleep Apnea": "Sleep Apnea"
+        };
+        const bloodPressureMap = {
+            "Normal": "Normal",
+            "Meningkat": "Elevated",
+            "Tinggi": "High"
+        };
+
+        // Inverse mapping for preview
+        const invGenderMap = { "Male": "Laki-laki", "Female": "Perempuan" };
+        const invOccupationMap = {
+            "Software Engineer": "Software Engineer",
+            "Doctor": "Dokter",
+            "Teacher": "Guru",
+            "Student": "Pelajar/Mahasiswa",
+            "Other": "Lainnya"
+        };
+        const invBmiMap = {
+            "Normal Weight": "Normal",
+            "Overweight": "Kelebihan Berat Badan",
+            "Obese": "Obesitas"
+        };
+        const invSleepDisorderMap = {
+            "None": "Tidak Ada",
+            "Insomnia": "Insomnia",
+            "Sleep Apnea": "Sleep Apnea"
+        };
+        const invBloodPressureMap = {
+            "Normal": "Normal",
+            "Elevated": "Meningkat",
+            "High": "Tinggi"
+        };
+
+        // Update stress slider background gradient dynamically
+        function updateStressSlider(val) {
+            document.getElementById('stressVal').innerText = val;
+            const min = 1;
+            const max = 10;
+            const percentage = ((val - min) / (max - min)) * 100;
+            const slider = document.getElementById('stress_level');
+            if (slider) {
+                slider.value = val;
+                slider.style.background = `linear-gradient(to right, #8b5cf6 0%, #22d3ee ${percentage}%, #070b15 ${percentage}%, #070b15 100%)`;
+            }
+        }
+
+        // Initial Load
+        document.addEventListener("DOMContentLoaded", () => {
+            loadHistory();
+            updateStressSlider(5);
+        });
+
+        // Load History from SQLite API
+        async function loadHistory() {
+            const listEl = document.getElementById("historyList");
+            
+            // Set dynamic loading layout with skeleton shimmer
+            listEl.innerHTML = `
+                <div id="historyShimmer" class="loading-shimmer space-y-3 mb-3">
+                    <div class="bg-slate-900/40 border border-slate-800/80 p-3.5 rounded-[1rem] animate-pulse space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div class="h-4 bg-slate-800 rounded w-2/3"></div>
+                            <div class="h-4 bg-slate-800 rounded w-1/4"></div>
+                        </div>
+                        <div class="h-3 bg-slate-800 rounded w-1/3 mt-2"></div>
+                        <div class="flex justify-between items-center border-t border-slate-800/80 pt-2.5 mt-2">
+                            <div class="h-3 bg-slate-800 rounded w-1/2"></div>
+                            <div class="flex space-x-1.5">
+                                <div class="h-5 w-5 bg-slate-800 rounded"></div>
+                                <div class="h-5 w-5 bg-slate-800 rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="historySpinner" class="text-center py-8 text-slate-500 text-sm">
+                    <i class="fa-solid fa-circle-notch animate-spin text-violet-500 text-lg mb-2"></i>
+                    <p>Memuat riwayat...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${API_URL}/history`);
+                if (response.ok) {
+                    allHistories = await response.json();
+                    renderHistory(allHistories);
+                } else {
+                    listEl.innerHTML = `<div class="text-center text-xs py-8 text-rose-400">Gagal memuat riwayat (${response.status})</div>`;
+                }
+            } catch (err) {
+                console.error("Connection error loading history:", err);
+                listEl.innerHTML = `
+                    <div class="text-center text-xs py-8 text-slate-500">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg mb-2"></i>
+                        <p>Koneksi gagal ke Flask API.</p>
+                        <p class="text-[10px] mt-1 text-slate-600">Pastikan backend berjalan di port 5000</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Render history items in sidebar
+        function renderHistory(items) {
+            const listEl = document.getElementById("historyList");
+            if (items.length === 0) {
+                listEl.innerHTML = `<div class="text-center text-xs py-8 text-slate-600 italic">Tidak ada riwayat.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = "";
+            items.forEach(item => {
+                // Class Styling based on diagnostic output
+                let badgeClass = "bg-emerald-950/80 text-emerald-400 border-emerald-800/80";
+                if (item.final_class === "CUKUP") badgeClass = "bg-amber-950/80 text-amber-400 border-amber-800/80";
+                if (item.final_class === "BURUK") badgeClass = "bg-rose-950/80 text-rose-400 border-rose-800/80";
+
+                const card = document.createElement("div");
+                card.className = `group bg-slate-900/60 hover:bg-slate-800/60 border border-slate-800/80 hover:border-slate-700/80 p-3.5 rounded-2xl flex flex-col justify-between transition duration-200 cursor-pointer ${activeConsultationId === item.consultation_id ? 'ring-1 ring-violet-500 bg-slate-800/80 border-transparent' : ''}`;
+                card.onclick = () => previewHistory(item);
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="truncate pr-2">
+                            <h4 class="text-sm font-bold text-white truncate">${item.name}</h4>
+                            <p class="text-[10px] text-slate-500 mt-0.5">${item.date}</p>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeClass}">${item.final_class}</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-3 border-t border-slate-800/80 pt-2">
+                        <span class="text-[10px] text-slate-500">${item.age} Tahun • ${item.gender === 'Male' ? 'Laki-laki' : 'Perempuan'}</span>
+                        <div class="flex items-center space-x-1.5 opacity-80 group-hover:opacity-100 transition">
+                            <button onclick="event.stopPropagation(); exportHistoryItemCSV(${item.consultation_id})" title="Ekspor CSV" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition active:scale-90">
+                                <i class="fa-solid fa-download text-[10px]"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteHistoryItem(${item.consultation_id})" title="Hapus Riwayat" class="w-6 h-6 rounded bg-rose-950 hover:bg-rose-900 text-rose-400 flex items-center justify-center transition active:scale-90">
+                                <i class="fa-solid fa-trash text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        // Filter history by search bar
+        function filterHistory() {
+            const q = document.getElementById("searchHistory").value.toLowerCase();
+            const filtered = allHistories.filter(item => item.name.toLowerCase().includes(q));
+            renderHistory(filtered);
+        }
+
+        // Click "+" for new consultation
+        function newConsultation() {
+            isPreviewMode = false;
+            activeConsultationId = null;
+
+            // Reset Form Fields
+            document.getElementById("evaluationForm").reset();
+            updateStressSlider(5);
+
+            // Enable elements
+            document.getElementById("submitBtn").disabled = false;
+            document.getElementById("submitBtn").classList.remove("opacity-50", "cursor-not-allowed");
+            document.getElementById("submitBtn").querySelector("span").innerText = "Evaluasi Kualitas Tidur";
+
+            // Hide results
+            document.getElementById("resultPanel").classList.add("hidden");
+            
+            // Re-render history list to remove highlight ring
+            renderHistory(allHistories);
+        }
+
+        // View single history detail
+        function previewHistory(item) {
+            isPreviewMode = true;
+            activeConsultationId = item.consultation_id;
+
+            // Populate form fields with patient data
+            document.getElementById("name").value = item.name;
+            document.getElementById("gender").value = invGenderMap[item.gender] || "Laki-laki";
+            document.getElementById("age").value = item.age;
+            document.getElementById("occupation").value = invOccupationMap[item.occupation] || "Software Engineer";
+            document.getElementById("sleep_duration").value = item.sleep_duration;
+            updateStressSlider(item.stress_level);
+            document.getElementById("physical_activity").value = item.physical_activity;
+            document.getElementById("bmi_category").value = invBmiMap[item.bmi_category] || "Normal";
+            document.getElementById("heart_rate").value = item.heart_rate;
+            document.getElementById("sleep_disorder").value = invSleepDisorderMap[item.sleep_disorder] || "Tidak Ada";
+            document.getElementById("blood_pressure").value = invBloodPressureMap[item.blood_pressure] || "Normal";
+            document.getElementById("daily_steps").value = item.daily_steps || 0;
+
+            // Disable submit button in preview mode
+            const submitBtn = document.getElementById("submitBtn");
+            submitBtn.disabled = true;
+            submitBtn.classList.add("opacity-50", "cursor-not-allowed");
+            submitBtn.querySelector("span").innerText = "Lihat Riwayat Diagnosis";
+
+            // Display results
+            displayEvaluationResult(item);
+
+            // Re-render history to apply highlight ring
+            renderHistory(allHistories);
+        }
+
+        // Send payload to backend /predict
+        async function submitEvaluation(event) {
+            event.preventDefault();
+            if (isPreviewMode) return;
+
+            // Gather inputs
+            const payload = {
+                features: {
+                    name: document.getElementById("name").value.trim(),
+                    gender: genderMap[document.getElementById("gender").value],
+                    age: parseInt(document.getElementById("age").value),
+                    occupation: occupationMap[document.getElementById("occupation").value],
+                    sleep_duration: parseFloat(document.getElementById("sleep_duration").value),
+                    stress_level: parseInt(document.getElementById("stress_level").value),
+                    physical_activity: parseInt(document.getElementById("physical_activity").value),
+                    bmi_category: bmiMap[document.getElementById("bmi_category").value],
+                    heart_rate: parseInt(document.getElementById("heart_rate").value),
+                    sleep_disorder: sleepDisorderMap[document.getElementById("sleep_disorder").value],
+                    blood_pressure: bloodPressureMap[document.getElementById("blood_pressure").value],
+                    daily_steps: parseInt(document.getElementById("daily_steps").value)
+                }
+            };
+
+            // Loading state
+            document.getElementById("loader").classList.remove("hidden");
+            document.getElementById("submitBtn").disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Display evaluation results
+                    displayEvaluationResult(data);
+                    
+                    // Set preview state of the newly created calculation
+                    isPreviewMode = true;
+                    activeConsultationId = data.consultation_id;
+                    
+                    document.getElementById("submitBtn").querySelector("span").innerText = "Hasil Evaluasi Terkunci";
+                    
+                    // Refresh and reload history
+                    await loadHistory();
+                } else {
+                    const errorText = await response.text();
+                    alert(`Gagal memproses diagnosis: ${errorText}`);
+                    document.getElementById("submitBtn").disabled = false;
+                }
+            } catch (err) {
+                console.error("Evaluation Error:", err);
+                alert("Koneksi gagal ke server. Harap pastikan Flask app.py berjalan.");
+                document.getElementById("submitBtn").disabled = false;
+            } finally {
+                document.getElementById("loader").classList.add("hidden");
+            }
+        }
+
+        // Display results structure
+        function displayEvaluationResult(data) {
+            const panel = document.getElementById("resultPanel");
+            panel.classList.remove("hidden");
+
+            // Extract values
+            const finalClass = data.final_prediction || data.final_class;
+            const cfRes = data.cf_result || {};
+            const rfRes = data.rf_result || {};
+            const combined = data.combined_scores || {};
+
+            // Final status and text glow styling
+            const statusEl = document.getElementById("resFinalClass");
+            statusEl.innerText = finalClass;
+            statusEl.className = "text-3xl md:text-4xl font-extrabold uppercase tracking-wide ";
+            
+            if (finalClass === "BAIK") {
+                statusEl.classList.add("text-emerald-400", "glow-baik");
+            } else if (finalClass === "CUKUP") {
+                statusEl.classList.add("text-amber-400", "glow-cukup");
+            } else {
+                statusEl.classList.add("text-rose-400", "glow-buruk");
+            }
+
+            // Generate Medical Friendly Description
+            const nameVal = data.name || document.getElementById("name").value.trim() || "Anda";
+            const stressVal = data.stress_level || document.getElementById("stress_level").value;
+            const durationVal = data.sleep_duration || document.getElementById("sleep_duration").value;
+            const disorderVal = data.sleep_disorder || document.getElementById("sleep_disorder").value;
+
+            let explanation = `Halo **${nameVal}**, sistem gabungan kami mendiagnosis kualitas tidur Anda berada dalam kategori **${finalClass}**. `;
+            if (finalClass === "BURUK") {
+                explanation += `Ini dikarenakan kombinasi pemicu klinis yang kuat, seperti skala stres harian yang tinggi (skor ${stressVal}/10) `;
+                if (parseFloat(durationVal) < 6) {
+                    explanation += `serta jam istirahat yang tidak mencukupi (hanya ${durationVal} jam). `;
+                }
+                if (disorderVal !== "Tidak Ada" && disorderVal !== "None") {
+                    explanation += `Kondisi ini diperberat oleh indikasi klinis penyakit tidur bawaan Anda yaitu ${disorderVal === 'Insomnia' ? 'Insomnia' : 'Sleep Apnea'}.`;
+                } else {
+                    explanation += `Disarankan untuk mengurangi beban stres mental dan menjaga jadwal tidur teratur.`;
+                }
+            } else if (finalClass === "CUKUP") {
+                explanation += `Pola tidur Anda dalam batas wajar namun membutuhkan perbaikan. Durasi istirahat Anda berkisar ${durationVal} jam dengan tingkat ketegangan tubuh harian skala ${stressVal}. Coba tambahkan aktivitas fisik ringan untuk mengoptimalkan kebugaran kardiovaskular.`;
+            } else {
+                explanation += `Kondisi tidur Anda sangat prima! Durasi tidur harian Anda (${durationVal} jam) dipadukan dengan manajemen tingkat stres yang sangat tenang (skor ${stressVal}/10) menjaga metabolisme tubuh Anda bekerja secara maksimal. Pertahankan pola hidup sehat ini!`;
+            }
+            document.getElementById("resFriendlyDesc").innerHTML = explanation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            // Set detail info
+            const cfVal = cfRes.cf_value !== undefined ? cfRes.cf_value : cfRes.value;
+            const cfClass = cfRes.class || "";
+            document.getElementById("resCfPredict").innerText = `${cfClass} (CF: ${cfVal ? cfVal.toFixed(3) : '0.000'})`;
+            document.getElementById("resRfPredict").innerText = rfRes.prediction || "N/A";
+
+            // Set Progress Bars (Linear progress)
+            const scoreBaikVal = combined.BAIK || 0.0;
+            const scoreCukupVal = combined.CUKUP || 0.0;
+            const scoreBurukVal = combined.BURUK || 0.0;
+
+            document.getElementById("scoreBaik").innerText = scoreBaikVal.toFixed(3);
+            document.getElementById("barBaik").style.width = `${scoreBaikVal * 100}%`;
+
+            document.getElementById("scoreCukup").innerText = scoreCukupVal.toFixed(3);
+            document.getElementById("barCukup").style.width = `${scoreCukupVal * 100}%`;
+
+            document.getElementById("scoreBuruk").innerText = scoreBurukVal.toFixed(3);
+            document.getElementById("barBuruk").style.width = `${scoreBurukVal * 100}%`;
+
+            // Fired Rules Parsing
+            const rulesContainer = document.getElementById("resFiredRules");
+            rulesContainer.innerHTML = "";
+            
+            let rulesList = [];
+            if (cfRes.fired_rules) {
+                rulesList = cfRes.fired_rules;
+            } else if (data.fired_rules) {
+                try {
+                    rulesList = typeof data.fired_rules === 'string' ? JSON.parse(data.fired_rules) : data.fired_rules;
+                } catch(e) {
+                    console.error("Error parsing rules:", e);
+                }
+            }
+
+            if (rulesList.length === 0) {
+                rulesContainer.innerHTML = `<div class="text-slate-500 italic text-center py-2">Tidak ada aturan Certainty Factor khusus yang terpicu. Hasil murni didominasi probabilitas Random Forest.</div>`;
+            } else {
+                rulesList.forEach(rule => {
+                    const ruleDiv = document.createElement("div");
+                    ruleDiv.className = "flex items-start justify-between bg-[#090e1a]/60 border border-slate-800/60 p-3.5 rounded-[1rem] gap-2";
+                    ruleDiv.innerHTML = `
+                        <div>
+                            <span class="px-1.5 py-0.5 rounded bg-violet-950 text-violet-300 font-bold border border-violet-800 mr-1.5 text-[9px]">${rule.id}</span>
+                            <span class="text-slate-350 text-xs">${rule.desc || rule.description}</span>
+                        </div>
+                        <span class="text-violet-400 font-semibold flex-shrink-0 text-right text-xs">+${(rule.cf_added || rule.cf || 0).toFixed(2)} CF</span>
+                    `;
+                    rulesContainer.appendChild(ruleDiv);
+                });
+            }
+
+            // Scroll result panel into view on mobile
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Close and reset results
+        function clearResultAndReset() {
+            newConsultation();
+        }
+
+        // Delete History Item
+        async function deleteHistoryItem(id) {
+            const item = allHistories.find(h => h.consultation_id === id);
+            const name = item ? item.name : "evaluasi ini";
+            if (!confirm(`Apakah Anda yakin ingin menghapus data riwayat dari "${name}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/history/${id}`, { method: "DELETE" });
+                if (response.ok) {
+                    if (activeConsultationId === id) {
+                        newConsultation();
+                    }
+                    await loadHistory();
+                } else {
+                    alert("Gagal menghapus riwayat dari database.");
+                }
+            } catch (err) {
+                console.error("Delete history error:", err);
+                alert("Kesalahan koneksi ke backend Flask API.");
+            }
+        }
+
+        // Export history to CSV via Web Client
+        function exportHistoryItemCSV(id) {
+            const item = allHistories.find(h => h.consultation_id === id);
+            if (!item) return;
+
+            // Make CSV format
+            const headers = Object.keys(item);
+            const values = Object.values(item).map(val => {
+                if (typeof val === 'object') {
+                    return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
+                }
+                if (typeof val === 'string') {
+                    return `"${val.replace(/"/g, '""')}"`;
+                }
+                return val;
+            });
+
+            const csvContent = [headers.join(","), values.join(",")].join("\n");
+            
+            // Create download trigger
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            
+            // Safe clean filename
+            const safeName = item.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const safeDate = item.date.replace(/[^a-z0-9]/gi, '_');
+            link.setAttribute("href", url);
+            link.setAttribute("download", `sisru_${safeName}_${item.final_class}_${safeDate}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Info popup Modal logic
+        function showInfoModal(title, text) {
+            document.getElementById("modalTitle").innerText = title;
+            document.getElementById("modalDesc").innerText = text;
+            document.getElementById("infoModal").classList.remove("hidden");
+        }
+
+        function closeInfoModal() {
+            document.getElementById("infoModal").classList.add("hidden");
+        }
+    </script>
+</body>
+</html>

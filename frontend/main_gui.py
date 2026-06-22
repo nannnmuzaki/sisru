@@ -1,4 +1,19 @@
 # pyrefly: ignore [missing-import]
+import os
+import sys
+
+# Fix Tcl/Tk paths for Windows python distributions (like Laragon)
+if sys.platform.startswith('win'):
+    tcl_dir = os.path.join(sys.base_prefix, 'tcl')
+    if os.path.exists(tcl_dir):
+        for d in os.listdir(tcl_dir):
+            path = os.path.join(tcl_dir, d)
+            if os.path.isdir(path):
+                if d.startswith('tcl'):
+                    os.environ['TCL_LIBRARY'] = path
+                elif d.startswith('tk'):
+                    os.environ['TK_LIBRARY'] = path
+
 import customtkinter as ctk
 import requests
 import tkinter.messagebox as messagebox
